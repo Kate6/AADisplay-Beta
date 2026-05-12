@@ -98,7 +98,7 @@ android {
     androidResources.additionalParameters += mutableListOf("--allow-reserved-package-id", "--package-id", "0x64")
 
     namespace = "io.github.nitsuya.aa.display"
-    buildToolsVersion = "35.0.0"
+    buildToolsVersion = "36.0.0"
 }
 
 configurations.all {
@@ -106,9 +106,9 @@ configurations.all {
 }
 
 dependencies {
-    implementation("androidx.core:core-ktx:1.17.0")
-    implementation("androidx.activity:activity-ktx:1.11.0")
-    implementation("androidx.fragment:fragment-ktx:1.8.9")
+    implementation("androidx.core:core-ktx:1.15.0")
+    implementation("androidx.activity:activity-ktx:1.9.3")
+    implementation("androidx.fragment:fragment-ktx:1.8.5")
 //    implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("androidx.media:media:1.7.1")
     implementation("androidx.constraintlayout:constraintlayout:2.2.1")

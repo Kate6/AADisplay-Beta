@@ -141,6 +141,56 @@
 
     </PreferenceCategory>
 
+    <PreferenceCategory
+        app:key="CategoryHeadUnitHack"
+        app:title="Head Unit Compatibility"
+        app:summary="Bypass head unit restrictions for third-party apps"
+        app:singleLineTitle="true"
+        app:iconSpaceReserved="false">
+
+        <rikka.material.preference.MaterialSwitchPreference
+            app:defaultValue="false"
+            app:key="EnableHeadUnitHack"
+            app:title="Enable Head Unit Hack"
+            app:summary="Inject phenotype flags to bypass head unit compatibility checks"
+            app:iconSpaceReserved="false"/>
+
+        <rikka.material.preference.MaterialSwitchPreference
+            app:defaultValue="true"
+            app:key="ForceAllowUnknownSources"
+            app:title="Allow Non-Play Store Apps"
+            app:summary="Ignore installer validation for third-party apps"
+            app:iconSpaceReserved="false"/>
+
+        <rikka.material.preference.MaterialSwitchPreference
+            app:defaultValue="true"
+            app:key="BypassValidation"
+            app:title="Bypass App Validation"
+            app:summary="Skip Android Auto app validation checks"
+            app:iconSpaceReserved="false"/>
+
+        <EditTextPreference
+            android:inputType="text"
+            app:singleLineTitle="true"
+            app:defaultValue="Mobis"
+            app:key="HeadUnitMake"
+            app:title="Head Unit Make"
+            app:summary="Spoof the head unit manufacturer (e.g., Mobis, Google)"
+            app:useSimpleSummaryProvider="true"
+            app:iconSpaceReserved="false"/>
+
+        <EditTextPreference
+            android:inputType="text"
+            app:singleLineTitle="true"
+            app:defaultValue="standard_m_5"
+            app:key="HeadUnitModel"
+            app:title="Head Unit Model"
+            app:summary="Spoof the head unit model identifier"
+            app:useSimpleSummaryProvider="true"
+            app:iconSpaceReserved="false"/>
+
+    </PreferenceCategory>
+
 <!--
     <PreferenceCategory
         app:key="CategoryLauncherMode"

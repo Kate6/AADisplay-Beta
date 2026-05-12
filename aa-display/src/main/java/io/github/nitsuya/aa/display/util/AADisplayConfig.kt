@@ -30,6 +30,13 @@ sealed class AADisplayConfig<T>(val key: String) {
     object ComGoogleAndroidProjectionGearheadProps: PropertiesConfig("ComGoogleAndroidProjectionGearheadProps")
     object LauncherModeProps: PropertiesConfig("LauncherModeProps")
 
+    // Head Unit Compatibility Hack
+    object EnableHeadUnitHack: BooleanConfig("EnableHeadUnitHack", false)
+    object HeadUnitMake: StringConfig("HeadUnitMake", "Mobis")
+    object HeadUnitModel: StringConfig("HeadUnitModel", "standard_m_5")
+    object ForceAllowUnknownSources: BooleanConfig("ForceAllowUnknownSources", true)
+    object BypassValidation: BooleanConfig("BypassValidation", true)
+
 
     abstract class StringConfig(key: String, private val defValue: String? = null): AADisplayConfig<String?>(key){
         override fun get(config: SharedPreferences?): String? = config?.getString(key, defValue)?.trim()?.let {
