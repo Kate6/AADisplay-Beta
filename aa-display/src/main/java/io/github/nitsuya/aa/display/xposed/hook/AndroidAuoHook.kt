@@ -3,6 +3,7 @@ package io.github.nitsuya.aa.display.xposed.hook
 import android.app.Application
 import android.app.Instrumentation
 import android.content.SharedPreferences
+import android.util.Log
 import com.github.kyuubiran.ezxhelper.init.EzXHelperInit
 import com.github.kyuubiran.ezxhelper.utils.findMethod
 import com.github.kyuubiran.ezxhelper.utils.hookBefore
@@ -44,7 +45,7 @@ object AndroidAuoHook : BaseHook() {
 
         val configPreferences = XSharedPreferences(BuildConfig.APPLICATION_ID, AADisplayConfig.ConfigName)
         if(!configPreferences.file.canRead()){
-            log(tagName,"load configPreferences fail")
+            Log.i(tagName, "load configPreferences fail")
             return
         }
 
@@ -64,7 +65,11 @@ object AndroidAuoHook : BaseHook() {
                 }
                 val measureTimeMillis = measureTimeMillis {
                     hooks.forEach { h ->
-                        h.loadDexClass(bridge, lpparam)
+                        runCatching {
+                            h.loadDexClass(bridge, lpparam)
+                        }.onFailure { e ->
+                            Log.e(tagName, "loadDexClass failed for ${h.tagName}: ${e.message}")
+                        }
                     }
                 }
                 log(tagName,"${lpparam.processName} load class measure ${measureTimeMillis}ms")

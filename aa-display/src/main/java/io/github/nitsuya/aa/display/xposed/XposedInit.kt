@@ -19,11 +19,14 @@ class XposedInit : IXposedHookZygoteInit, IXposedHookLoadPackage{
     }
 
     override fun initZygote(startupParam: IXposedHookZygoteInit.StartupParam) {
+        android.util.Log.i(TAG, "initZygote called")
         EzXHelperInit.initZygote(startupParam)
     }
 
     override fun handleLoadPackage(lpparam: XC_LoadPackage.LoadPackageParam) {
         val packageName = lpparam.packageName
+        android.util.Log.i("AAD_XposedInit", "Loading package: $packageName")
+        
         when{
             packageName == "android" && lpparam.appInfo == null -> arrayOf(AndroidHook)
             packageName == "com.google.android.projection.gearhead" -> arrayOf(AndroidAuoHook)
@@ -36,10 +39,12 @@ class XposedInit : IXposedHookZygoteInit, IXposedHookLoadPackage{
     }
 
     private fun initHooks(lpparam: XC_LoadPackage.LoadPackageParam, vararg hook: BaseHook) {
+        android.util.Log.i(TAG, "initHooks called with ${hook.size} hooks")
         EzXHelperInit.initHandleLoadPackage(lpparam)
         hook.forEach {
             runCatching {
                 if (it.isInit) return@forEach
+                android.util.Log.i(TAG, "Initializing hook: ${it.tagName}")
                 it.init(lpparam)
                 it.isInit = true
                 log(TAG, "Inited hook: ${it.tagName}")

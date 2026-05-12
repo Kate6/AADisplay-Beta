@@ -114,13 +114,15 @@ object VirtualDisplayDpi: IntConfig("VirtualDisplayDpi", 0)
 
 New hook to bypass head unit restrictions for third-party apps. Targets:
 
-- **Phenotype flags**: `Watevra__car_hardware_headunit_filter_list`, `CarActivityManager__gmm_start_sub_phase_timers_hu_make_allow_list`, `AppValidation__*`
-- **Unknown sources bypass**: Forces `allow_unknown_sources = true`
-- **Validation bypass**: Hooks validation check methods
+- **Database cursor spoofing**: `HeadUnitMakeCursorWrapper` intercepts SQLite cursors for `allowedcars` table and replaces `headUnitMake` column values (e.g., "Mobis" → "Google")
+- **ContentResolver queries**: Hooks queries for car service data to wrap cursors
+- **SharedPreferences**: Forces `allow_unknown_sources=true`, `device_supported=true`
+- **Phenotype flags**: Injects compatibility flags
 
 Config options (in `AADisplayConfig`):
 - `EnableHeadUnitHack` - Master toggle (default: false)
-- `HeadUnitMake` - Spoof head unit manufacturer (default: "Mobis")
-- `HeadUnitModel` - Spoof head unit model (default: "standard_m_5")
+- `HeadUnitMake` - Actual head unit make to replace (default: "Mobis")
 - `ForceAllowUnknownSources` - Allow non-Play Store apps (default: true)
 - `BypassValidation` - Skip app validation (default: true)
+
+**How it works**: Kia Soul reports `hu_make="Mobis"` which causes AA to filter out third-party apps. By replacing this value with "Google" (which Head Unit Revived uses) in the database cursors, apps become visible.
