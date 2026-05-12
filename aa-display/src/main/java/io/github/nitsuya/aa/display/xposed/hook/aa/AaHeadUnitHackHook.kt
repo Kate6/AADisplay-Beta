@@ -1,11 +1,9 @@
 package io.github.nitsuya.aa.display.xposed.hook.aa
 
 import android.content.ContentResolver
-import android.content.ContentValues
 import android.content.SharedPreferences
 import android.database.Cursor
 import android.database.MatrixCursor
-import android.database.MergeCursor
 import android.net.Uri
 import android.os.Binder
 import com.github.kyuubiran.ezxhelper.utils.findAllMethods
@@ -19,17 +17,24 @@ import io.github.nitsuya.aa.display.xposed.hook.AaHook
 import io.github.nitsuya.aa.display.xposed.log
 
 /**
- * Hook to bypass head unit compatibility checks and allow third-party apps.
- * Kia Soul: Mobis, standard_m_5, KIA_US
+ * Hook to spoof head unit make from "Mobis" to "Google".
  *
- * Key insight: The head unit info comes from the car's handshake and is stored in
- * carservicedata.db on the phone. The filtering happens in gearhead based on
- * this info combined with phenotype flags and SharedPreferences.
+ * Kia Soul reports hu_make = "Mobis" which causes AA to hide third-party apps.
+ * Head Unit Revived uses "Google" by default which works fine.
+ *
+ * This hook intercepts where Android Auto reads the head unit make value
+ * and replaces "Mobis" with "Google".
  */
 object AaHeadUnitHackHook : AaHook() {
     override val tagName: String = "AAD_AaHeadUnitHackHook"
 
+    // The head unit make value to spoof (from user's Kia)
+    private val ACTUAL_HU_MAKE = "Mobis"
+    // What to replace it with (what works in Head Unit Revived)
+    private val SPOOFED_HU_MAKE = "Google"
+
     override fun isSupportProcess(processName: String): Boolean {
+        // Run in all processes to catch the hu_make access
         return processMain == processName || processProjection == processName || processCar == processName
     }
 
@@ -40,30 +45,137 @@ object AaHeadUnitHackHook : AaHook() {
             return
         }
 
-        log(tagName, "=== HEAD UNIT HACK ACTIVATED for ${lpparam.processName} ===")
+        // Get custom values from config (defaults work for Kia Soul)
+        val huMake = AADisplayConfig.HeadUnitMake.get(config) ?: ACTUAL_HU_MAKE
+        val spoofMake = SPOOFED_HU_MAKE
 
-        // Hook 1: SharedPreferences - force permissive values
-        hookSharedPreferencesBypass()
+        log(tagName, "=== HEAD UNIT HACK: Replacing '$huMake' with '$spoofMake' ===")
 
-        // Hook 2: Phenotype queries
-        hookPhenotypeBypass()
+        // Hook 1: SQLite database queries for allowedcars table
+        hookAllowedCarsDatabase()
 
-        // Hook 3: Car database queries (carservicedata.db)
-        hookCarDatabaseQueries()
+        // Hook 2: ContentResolver queries for car data
+        hookContentResolverQueries()
 
-        // Hook 4: App filtering methods
-        hookAppFiltering()
+        // Hook 3: SharedPreferences for car data
+        hookSharedPreferencesCarData()
 
-        // Hook 5: Force ProjectedAppsFeature
-        hookProjectedAppsFeature()
+        // Hook 4: SharedPreferences - allow unknown sources
+        hookAllowUnknownSources()
 
-        // Hook 6: ContentProvider queries for car data
-        hookContentProviderQueries()
+        // Hook 5: Phenotype flags for compatibility
+        hookPhenotypeFlags()
 
         log(tagName, "=== Head unit hack installed ===")
     }
 
-    private fun hookSharedPreferencesBypass() {
+    /**
+     * Hook SQLite queries for the allowedcars table and modify headUnitMake
+     */
+    private fun hookAllowedCarsDatabase() {
+        try {
+            // Hook SQLiteDatabase.rawQuery
+            findAllMethods("android.database.sqlite.SQLiteDatabase") {
+                name == "rawQuery" || name == "query"
+            }.hookAfter { param ->
+                val sql = if (param.args.isNotEmpty()) param.args[0]?.toString() ?: "" else ""
+                if (sql.contains("allowedcars") || sql.contains("headUnitMake") || sql.contains("hu_make")) {
+                    log(tagName, "DB query for car data: ${sql.take(100)}")
+                }
+
+                if (param.result is Cursor) {
+                    val cursor = param.result as Cursor
+                    if (containsHeadUnitMakeColumn(cursor)) {
+                        log(tagName, "Hooking cursor with headUnitMake column")
+                        param.result = HeadUnitMakeCursorWrapper(cursor, ACTUAL_HU_MAKE, SPOOFED_HU_MAKE, tagName)
+                    }
+                }
+            }
+            log(tagName, "AllowedCars DB hook installed")
+        } catch (e: Throwable) {
+            log(tagName, "AllowedCars DB hook failed: ${e.message}")
+        }
+
+        // Hook SQLiteStatement
+        try {
+            findMethod("android.database.sqlite.SQLiteStatement") {
+                name == "execute" || name == "executeForString"
+            }.hookBefore { param ->
+                log(tagName, "SQLiteStatement: ${param.thisObject}")
+            }
+        } catch (e: Throwable) {
+            // Not found
+        }
+    }
+
+    /**
+     * Hook ContentResolver queries for car data providers
+     */
+    private fun hookContentResolverQueries() {
+        try {
+            findAllMethods(ContentResolver::class.java) {
+                name == "query" && parameterTypes[0] == Uri::class.java
+            }.hookBefore { param ->
+                val uri = param.args[0] as Uri? ?: return@hookBefore
+                val uriStr = uri.toString()
+
+                // Target queries for car service data
+                if (uriStr.contains("allowedcars") ||
+                    uriStr.contains("carservicedata") ||
+                    uriStr.contains("car") && uriStr.contains("data")) {
+                    log(tagName, "Car data ContentResolver query: $uriStr")
+                }
+            }
+
+            findAllMethods(ContentResolver::class.java) {
+                name == "query" && parameterTypes[0] == Uri::class.java
+            }.hookAfter { param ->
+                val uri = param.args[0] as Uri? ?: return@hookAfter
+                val uriStr = uri.toString()
+
+                if (uriStr.contains("allowedcars") ||
+                    uriStr.contains("carservice") ||
+                    uriStr.contains("carinfo")) {
+
+                    if (param.result is Cursor) {
+                        val cursor = param.result as Cursor
+                        if (containsHeadUnitMakeColumn(cursor)) {
+                            log(tagName, "Wrapping cursor for: $uriStr")
+                            param.result = HeadUnitMakeCursorWrapper(cursor, ACTUAL_HU_MAKE, SPOOFED_HU_MAKE, tagName)
+                        }
+                    }
+                }
+            }
+            log(tagName, "ContentResolver hooks installed")
+        } catch (e: Throwable) {
+            log(tagName, "ContentResolver hook failed: ${e.message}")
+        }
+    }
+
+    /**
+     * Hook SharedPreferences reads for car data
+     */
+    private fun hookSharedPreferencesCarData() {
+        try {
+            findAllMethods(SharedPreferences::class.java) {
+                name == "getString" && parameterCount == 2
+            }.hookBefore { param ->
+                val key = param.args[0] as String?
+                if (key == "headUnitMake" || key == "hu_make" || key == "car_hu_make") {
+                    log(tagName, "SP: $key read, returning '$SPOOFED_HU_MAKE' instead of '$ACTUAL_HU_MAKE'")
+                    param.result = SPOOFED_HU_MAKE
+                }
+            }
+            log(tagName, "SharedPreferences car data hooks installed")
+        } catch (e: Throwable) {
+            log(tagName, "SharedPreferences hook failed: ${e.message}")
+        }
+    }
+
+    /**
+     * Hook allow_unknown_sources SharedPreferences
+     */
+    private fun hookAllowUnknownSources() {
         try {
             findAllMethods(SharedPreferences::class.java) {
                 name == "getBoolean" && parameterCount == 2
@@ -78,54 +190,28 @@ object AaHeadUnitHackHook : AaHook() {
                         log(tagName, "SP: device_supported -> true")
                         param.result = true
                     }
-                    "developer_settings_enabled" -> {
-                        log(tagName, "SP: developer_settings_enabled -> true")
-                        param.result = true
-                    }
                 }
             }
-            log(tagName, "SP getBoolean hooks installed")
+            log(tagName, "Allow unknown sources hook installed")
         } catch (e: Throwable) {
-            log(tagName, "SP getBoolean hook failed: ${e.message}")
-        }
-
-        try {
-            findAllMethods(SharedPreferences::class.java) {
-                name == "getString" && parameterCount == 2
-            }.hookBefore { param ->
-                val key = param.args[0] as String
-                if (key.contains("allowed_package") || key.contains("blocked_package")) {
-                    log(tagName, "SP: Clearing restriction for $key")
-                    param.result = ""
-                }
-            }
-            log(tagName, "SP getString hooks installed")
-        } catch (e: Throwable) {
-            log(tagName, "SP getString hook failed: ${e.message}")
+            log(tagName, "Allow unknown sources hook failed: ${e.message}")
         }
     }
 
-    private fun hookPhenotypeBypass() {
+    /**
+     * Inject phenotype flags for compatibility
+     */
+    private fun hookPhenotypeFlags() {
         try {
             val flags = listOf(
-                // Enable features
                 "ProjectedAppsFeature__enabled" to "true",
                 "RemoteCarApps__enabled" to "true",
-                "COOLWALK_UI_ENABLED" to "true",
-
-                // Clear head unit filters
                 "Watevra__car_hardware_headunit_filter_list" to "",
                 "CarActivityManager__gmm_start_sub_phase_timers_hu_make_allow_list" to
                     "Mobis,Google,Pioneer,Kenwood,JVC,Sony,Alpine,Clarion,Parrot",
-
-                // Clear validation restrictions
                 "AppValidation__allowed_package_list" to "",
                 "AppValidation__blocked_packages_by_installer" to "",
-                "AppValidation__dhu_bypass_validation" to "true",
-
-                // Car projector settings
-                "CarProjectionValidator__include_enabled_only_components" to "false",
-                "CarProjectionValidator__filter_disabled_packages_in_ispackageallowed_method" to "false"
+                "AppValidation__dhu_bypass_validation" to "true"
             )
 
             val cursor = MatrixCursor(arrayOf("key", "value"), flags.size).apply {
@@ -133,179 +219,84 @@ object AaHeadUnitHackHook : AaHook() {
             }
 
             findAllMethods(ContentResolver::class.java) {
-                name == "query" && parameterTypes[0] == Uri::class.java
+                name == "query"
             }.hookAfter { param ->
                 val uri = param.args[0] as Uri? ?: return@hookAfter
                 val uriStr = uri.toString()
 
-                if (uriStr.contains("phenotype") || uriStr.contains("gms.car") || uriStr.contains("gearhead")) {
-                    log(tagName, "Phenotype query: $uriStr")
-
+                if (uriStr.contains("phenotype") || uriStr.contains("gms.car")) {
                     if (param.result is Cursor) {
-                        param.result = MergeCursor(arrayOf(param.result as Cursor, cursor))
+                        param.result = android.database.MergeCursor(arrayOf(param.result as Cursor, cursor))
                     }
                 }
             }
-            log(tagName, "Phenotype hooks installed (${flags.size} flags)")
+            log(tagName, "Phenotype flags hooks installed")
         } catch (e: Throwable) {
-            log(tagName, "Phenotype hooks failed: ${e.message}")
+            log(tagName, "Phenotype hook failed: ${e.message}")
         }
     }
 
-    private fun hookCarDatabaseQueries() {
-        // Hook SQLite database queries for carservicedata.db
-        try {
-            findMethod("android.database.sqlite.SQLiteDatabase") {
-                name == "query" || name == "rawQuery"
-            }.hookAfter { param ->
-                val methodName = param.method.name
-                val arg0 = if (param.args.isNotEmpty()) param.args[0] else null
-                val arg1 = if (param.args.size > 1) param.args[1] else null
-
-                val table = when {
-                    arg0 is String -> arg0 as String
-                    arg1 is String -> arg1 as String
-                    else -> ""
-                }
-
-                if (table.contains("allowedcars") || table.contains("carservice")) {
-                    log(tagName, "Car DB query: $table via $methodName")
-                }
+    /**
+     * Check if a cursor has a headUnitMake column
+     */
+    private fun containsHeadUnitMakeColumn(cursor: Cursor): Boolean {
+        for (i in 0 until cursor.columnCount) {
+            val colName = cursor.getColumnName(i).lowercase()
+            if (colName.contains("headunitmake") ||
+                colName.contains("head_unit_make") ||
+                colName.contains("humake") ||
+                colName == "headunitmake") {
+                return true
             }
-            log(tagName, "Car database hooks installed")
-        } catch (e: Throwable) {
-            log(tagName, "Car DB hooks failed: ${e.message}")
         }
-
-        // Hook ContentResolver for car data provider
-        try {
-            findMethod(ContentResolver::class.java) {
-                name == "query" && parameterTypes[0] == Uri::class.java
-            }.hookBefore { param ->
-                val uri = param.args[0] as Uri? ?: return@hookBefore
-                val uriStr = uri.toString()
-
-                // Target car data queries
-                if (uriStr.contains("carservice") ||
-                    uriStr.contains("allowedcars") ||
-                    uriStr.contains("carinfo") ||
-                    uriStr.contains("headunit")) {
-                    log(tagName, "Car data query intercepted: $uriStr")
-                }
-            }
-        } catch (e: Throwable) {
-            // Hook failed
-        }
+        return false
     }
 
-    private fun hookAppFiltering() {
-        // Hook PackageManager queries
-        try {
-            findMethod("android.content.pm.PackageManager") {
-                name == "getInstalledPackages" ||
-                name == "queryIntentServices"
-            }.hookAfter { param ->
-                log(tagName, "PM method: ${param.method.name}")
+    /**
+     * Find the index of headUnitMake column
+     */
+    private fun findHeadUnitMakeColumnIndex(cursor: Cursor): Int {
+        for (i in 0 until cursor.columnCount) {
+            val colName = cursor.getColumnName(i).lowercase()
+            if (colName.contains("headunitmake") ||
+                colName.contains("head_unit_make") ||
+                colName.contains("humake")) {
+                return i
             }
-        } catch (e: Throwable) {
-            // PM hook failed
         }
+        return -1
+    }
+}
 
-        // Hook gearhead validation classes
-        try {
-            findMethod("com.google.android.projection.gearhead.validation") {
-                name.contains("is") && name.contains("Allowed")
-            }.hookBefore { param ->
-                log(tagName, "Bypassing validation: ${param.method.name}")
-                param.result = true
+/**
+ * Cursor wrapper that replaces headUnitMake values
+ */
+class HeadUnitMakeCursorWrapper(
+    private val delegate: Cursor,
+    private val actualMake: String,
+    private val spoofedMake: String,
+    private val tagName: String
+) : Cursor by delegate {
+
+    private val headUnitMakeIndex: Int by lazy {
+        for (i in 0 until columnCount) {
+            val colName = getColumnName(i).lowercase()
+            if (colName.contains("headunitmake") ||
+                colName.contains("head_unit_make") ||
+                colName.contains("humake")) {
+                io.github.nitsuya.aa.display.xposed.log(tagName, "Found headUnitMake column at index $i: ${getColumnName(i)}")
+                return@lazy i
             }
-        } catch (e: Throwable) {
-            // Class not found
         }
-
-        // Hook CarProjectionValidator
-        try {
-            findMethod("com.google.android.projection.gearhead") {
-                name.contains("CarProjectionValidator") ||
-                (name.contains("isPackage") && name.contains("Allowed"))
-            }.hookBefore { param ->
-                log(tagName, "CarProjectionValidator: ${param.method.name} -> true")
-                param.result = true
-            }
-        } catch (e: Throwable) {
-            // Not found
-        }
-
-        log(tagName, "App filtering hooks attempted")
+        -1
     }
 
-    private fun hookProjectedAppsFeature() {
-        // Hook the feature gate class
-        try {
-            findMethod("com.google.android.projection.gearhead") {
-                name.contains("ProjectedApps") ||
-                name.contains("FeatureGate") ||
-                name.contains("Feature")
-            }.hookAfter { param ->
-                log(tagName, "Feature gate: ${param.method.name} -> ${param.result}")
-            }
-        } catch (e: Throwable) {
-            // Not found
+    override fun getString(columnIndex: Int): String? {
+        val value = delegate.getString(columnIndex)
+        if (columnIndex == headUnitMakeIndex && value == actualMake) {
+            io.github.nitsuya.aa.display.xposed.log(tagName, "Spoofing headUnitMake: '$actualMake' -> '$spoofedMake'")
+            return spoofedMake
         }
-
-        // Hook any boolean return type methods that might control visibility
-        try {
-            findMethod("com.google.android.projection.gearhead") {
-                name.startsWith("is") || name.startsWith("can") || name.startsWith("should")
-            }.hookBefore { param ->
-                val result = param.result
-                if (result is Boolean && !result) {
-                    log(tagName, "Enabling: ${param.method.name}")
-                    param.result = true
-                }
-            }
-        } catch (e: Throwable) {
-            // Not found
-        }
-
-        log(tagName, "ProjectedApps feature hooks attempted")
-    }
-
-    private fun hookContentProviderQueries() {
-        // Hook ALL ContentResolver queries and log them
-        try {
-            findAllMethods(ContentResolver::class.java) {
-                name == "query"
-            }.hookBefore { param ->
-                val uri = param.args[0] as Uri? ?: return@hookBefore
-                val uriStr = uri.toString()
-
-                // Log all queries from gearhead to see what's being queried
-                if (uriStr.contains("projection") ||
-                    uriStr.contains("car") ||
-                    uriStr.contains("auto") ||
-                    uriStr.contains("google")) {
-                    log(tagName, "Gearhead query: $uriStr")
-                }
-            }
-        } catch (e: Throwable) {
-            log(tagName, "ContentProvider hook failed: ${e.message}")
-        }
-
-        // Hook ContentValues to potentially modify data being written
-        try {
-            findAllMethods("android.content.ContentResolver") {
-                name == "insert" || name == "update"
-            }.hookBefore { param ->
-                val uri = param.args[0] as Uri? ?: return@hookBefore
-                val uriStr = uri.toString()
-
-                if (uriStr.contains("carservice") || uriStr.contains("allowedcars")) {
-                    log(tagName, "Car data write: $uriStr")
-                }
-            }
-        } catch (e: Throwable) {
-            // Hook failed
-        }
+        return value
     }
 }
