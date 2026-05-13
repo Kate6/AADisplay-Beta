@@ -328,10 +328,10 @@ object AaHeadUnitHackHook : AaHook() {
             constructors.forEach { ctor ->
                 ctor.hookBefore { param ->
                     Log.d(tagName, "CarInfo constructor called with ${param.args.size} args")
-                    // Parameter index 8 is hu_make
+                    // Parameter index 8 is hu_make (confirmed by smali analysis)
                     if (param.args.size > 8) {
                         val arg8 = param.args[8] as? String
-                        if (arg8 == ACTUAL_HU_MAKE) {
+                        if (arg8 != null && arg8 != SPOOFED_HU_MAKE) {
                             Log.w(tagName, ">>> SPOOFING CarInfo constructor arg[8] (hu_make): '$arg8' -> '$SPOOFED_HU_MAKE'")
                             param.args[8] = SPOOFED_HU_MAKE
                         }
@@ -514,8 +514,8 @@ class HeadUnitMakeCursorWrapper(
 
     override fun getString(columnIndex: Int): String? {
         val value = delegate.getString(columnIndex)
-        if (columnIndex == headUnitMakeIndex && value == actualMake) {
-            Log.i(tagName, "Spoofing headUnitMake: '$actualMake' -> '$spoofedMake'")
+        if (columnIndex == headUnitMakeIndex && value != null && value != spoofedMake) {
+            Log.i(tagName, "Spoofing headUnitMake: '$value' -> '$spoofedMake'")
             return spoofedMake
         }
         return value

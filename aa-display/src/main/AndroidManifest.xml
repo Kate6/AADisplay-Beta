@@ -42,6 +42,16 @@
             </intent-filter>
         </activity>
         <activity android:name=".ui.setting.SettingsActivity" />
+        <activity
+            android:name=".ui.AaSettingsActivity"
+            android:exported="true"
+            android:label="@string/aa_settings"
+            android:icon="@drawable/ic_aa_settings" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
         <service
             android:name=".service.AaActivityService"
             android:enabled="true"
