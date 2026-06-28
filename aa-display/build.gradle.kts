@@ -14,8 +14,8 @@ android {
         applicationId = "io.github.nitsuya.aa.display"
         minSdk = 31
         targetSdk = 36
-        versionCode = 3000  // 设置一个很大的版本号，避免 LSPosed 提示更新
-        versionName = "0.22#16.1+beta"
+        versionCode = 3004  // 设置一个很大的版本号，避免 LSPosed 提示更新
+        versionName = "0.26#16.7+beta"
         buildConfigField("long", "BUILD_TIME", buildTime.toString())
     }
 
@@ -98,7 +98,7 @@ android {
     androidResources.additionalParameters += mutableListOf("--allow-reserved-package-id", "--package-id", "0x64")
 
     namespace = "io.github.nitsuya.aa.display"
-    buildToolsVersion = "36.0.0"
+    buildToolsVersion = "35.0.0"
 }
 
 configurations.all {
@@ -106,9 +106,9 @@ configurations.all {
 }
 
 dependencies {
-    implementation("androidx.core:core-ktx:1.15.0")
-    implementation("androidx.activity:activity-ktx:1.9.3")
-    implementation("androidx.fragment:fragment-ktx:1.8.5")
+    implementation("androidx.core:core-ktx:1.17.0")
+    implementation("androidx.activity:activity-ktx:1.11.0")
+    implementation("androidx.fragment:fragment-ktx:1.8.9")
 //    implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("androidx.media:media:1.7.1")
     implementation("androidx.constraintlayout:constraintlayout:2.2.1")
@@ -140,9 +140,4 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycleVersion")
     implementation("androidx.lifecycle:lifecycle-livedata-ktx:$lifecycleVersion")
     implementation("androidx.lifecycle:lifecycle-common-java8:$lifecycleVersion")
-
-    testImplementation("junit:junit:4.13.2")
-    androidTestImplementation("androidx.test.ext:junit:1.3.0")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
-
 }

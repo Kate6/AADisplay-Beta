@@ -37,14 +37,14 @@
         <EditTextPreference
             android:inputType="number"
             app:key="AndroidAutoDpi"
-            app:title="AndroidAutoDpi"
+app:title="Android Auto DPI (0 = keep default)"
             app:useSimpleSummaryProvider="true"
             app:iconSpaceReserved="false" />
 
         <EditTextPreference
             android:inputType="number"
             app:key="VirtualDisplayDpi"
-            app:title="VirtualDisplayDpi"
+app:title="Mirrored Display DPI (0 = keep default)"
             app:useSimpleSummaryProvider="true"
             app:iconSpaceReserved="false" />
 
@@ -52,7 +52,7 @@
             android:inputType="number"
             app:defaultValue="180"
             app:key="DelayDestroyTime"
-            app:title="Delay Destroy Time"
+app:title="Keep Display Alive After Exit (seconds)"
             app:useSimpleSummaryProvider="true"
             app:iconSpaceReserved="false" />
 
@@ -67,33 +67,33 @@
             app:defaultValue="true"
             app:key="CloseLauncherDashboard"
             app:title="Block AA Split Screen"
-            app:summary=""
+app:summary="Hide Android Auto's split-screen / dashboard so the mirrored app uses the full screen"
             app:iconSpaceReserved="false"/>
 
         <rikka.material.preference.MaterialSwitchPreference
             app:defaultValue="true"
             app:key="ForceRightAngle"
             app:title="Force Right Angle"
-            app:summary=""
+app:summary="Square off the projected screen corners (disable rounded corners)"
             app:iconSpaceReserved="false"/>
 
         <ListPreference
             app:key="DisplayImePolicy"
             app:defaultValue="1"
-            app:title="ImePolicy"
+app:title="Keyboard (IME) Display"
             app:entries="@array/ime_policy_keys"
             app:entryValues="@array/ime_policy_values"
             app:useSimpleSummaryProvider="true"
             app:iconSpaceReserved="false"/>
 
-<!--        <EditTextPreference
+<EditTextPreference
             android:inputType="text"
             app:singleLineTitle="true"
-            app:defaultValue="am start com.miui.voiceassist/com.xiaomi.voiceassistant.CTAAlertActivity"
             app:key="VoiceAssistShell"
-            app:title="语音助手Shell"
+            app:title="Voice Assistant Shell"
+            app:summary="Root shell command to run on long-press of the assistant key. Empty = use Android Auto's built-in assistant. Example: am start com.miui.voiceassist/com.xiaomi.voiceassistant.CTAAlertActivity"
             app:useSimpleSummaryProvider="true"
-            app:iconSpaceReserved="false"/>-->
+            app:iconSpaceReserved="false"/>
 
     </PreferenceCategory>
 
@@ -120,23 +120,22 @@
 
     <PreferenceCategory
         app:key="CategoryAndroidAuto"
-        app:title="Android Auto Settings"
-        app:summary="[com.google.android."
-        app:singleLineTitle="true"
+        app:title="Advanced (optional)"
+        app:summary="Inject extra system properties into Android Auto's processes (one &quot;name=value&quot; per line). Leave blank unless a guide tells you to set something — wrong values can break projection."
         app:iconSpaceReserved="false">
 
         <EditTextPreference
             android:inputType="textMultiLine"
             app:key="ComGoogleAndroidProjectionGearheadProps"
-            app:title="projection.gearhead] properties"
-            app:useSimpleSummaryProvider="true"
+            app:title="Android Auto app properties"
+            app:summary="Injected into com.google.android.projection.gearhead"
             app:iconSpaceReserved="false"/>
 
         <EditTextPreference
             android:inputType="textMultiLine"
             app:key="ComGoogleAndroidGmsCarProps"
-            app:title="gms.car] properties"
-            app:useSimpleSummaryProvider="true"
+            app:title="Play Services Car properties"
+            app:summary="Injected into com.google.android.gms.car"
             app:iconSpaceReserved="false"/>
 
     </PreferenceCategory>
@@ -209,5 +208,22 @@
 
     </PreferenceCategory>
 -->
+
+    <PreferenceCategory
+        app:key="CategoryAbout"
+        app:title="About"
+        app:iconSpaceReserved="false">
+
+        <Preference
+            app:key="GithubLink"
+            app:title="Source code &amp; updates"
+            app:summary="github.com/bikekoala/AADisplay-Beta"
+            app:iconSpaceReserved="false">
+            <intent
+                android:action="android.intent.action.VIEW"
+                android:data="https://github.com/bikekoala/AADisplay-Beta"/>
+        </Preference>
+
+    </PreferenceCategory>
 
 </PreferenceScreen>
