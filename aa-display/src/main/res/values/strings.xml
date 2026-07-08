@@ -6,10 +6,16 @@
     <string name="xposeddescription">AADisplay</string>
     <string name="info_system_version">System Version</string>
     <string name="info_root_privilege">Root Privilege</string>
+    <string name="info_status">Status</string>
+    <string name="info_aa_version">Android Auto Version</string>
+    <string name="info_module_version">Module Version</string>
+    <string name="info_engine">Engine</string>
     <string name="activated">Activated</string>
     <string name="need_reboot">Need Reboot</string>
     <string name="need_LSPosed">Need LSPosed</string>
     <string name="not_activated">Not Activated</string>
     <string name="reboot">Reboot</string>
     <string name="aa_settings">Android Auto Settings</string>
+    <string name="log_viewer">Log Viewer</string>
+    <string name="view_logs">View Logs</string>
 </resources>

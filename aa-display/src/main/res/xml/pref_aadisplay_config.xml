@@ -77,6 +77,13 @@ app:summary="Hide Android Auto's split-screen / dashboard so the mirrored app us
 app:summary="Square off the projected screen corners (disable rounded corners)"
             app:iconSpaceReserved="false"/>
 
+        <rikka.material.preference.MaterialSwitchPreference
+            app:defaultValue="false"
+            app:key="PreferCoolwalkLayout"
+            app:title="Keep Coolwalk Multi-Pane Layout"
+            app:summary="Keep Android Auto's native split-screen layout instead of forcing single-pane / vertical rail"
+            app:iconSpaceReserved="false"/>
+
         <ListPreference
             app:key="DisplayImePolicy"
             app:defaultValue="1"

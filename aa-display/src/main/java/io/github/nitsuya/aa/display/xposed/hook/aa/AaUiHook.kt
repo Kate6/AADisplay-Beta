@@ -189,7 +189,11 @@ object AaUiHook: AaHook() {
     override fun hook(config: SharedPreferences, lpparam: XC_LoadPackage.LoadPackageParam) {
         log(tagName,  "AaUiHook: ~~~~~~~~~~~~~~~~~~~~~~~~~~~")
         hookBaseClick()
-        hookLayout()
+        if (!AADisplayConfig.PreferCoolwalkLayout.get(config)) {
+            hookLayout()
+        } else {
+            log(tagName, "Layout forcing disabled by user config (PreferCoolwalkLayout=true), keeping Coolwalk native layout")
+        }
         hookFacetBar(config)
         hookRadius(config)
     }

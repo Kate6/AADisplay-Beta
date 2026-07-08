@@ -7,6 +7,12 @@
         android:showAsAction="ifRoom" />
 
     <item
+        android:id="@+id/logs"
+        android:icon="@drawable/ic_bug_report_24"
+        android:title="@string/log_viewer"
+        android:showAsAction="never" />
+
+    <item
         android:id="@+id/github"
         android:title="GitHub"
         android:showAsAction="never" />

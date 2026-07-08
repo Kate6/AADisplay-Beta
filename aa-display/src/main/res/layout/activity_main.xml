@@ -13,6 +13,7 @@
         android:paddingVertical="?dialogPreferredPadding"
         tools:ignore="PrivateResource">
 
+        <!-- Activation Status Card -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/mcv_status"
             style="@style/Widget.Material3.CardView.Elevated"
@@ -49,7 +50,7 @@
                     android:textAppearance="?textAppearanceTitleMedium"
                     android:textColor="?colorOnPrimary"
                     android:textSize="16sp"
-                    tools:text="Magisk: activated" />
+                    tools:text="Activated" />
 
                 <com.google.android.material.textview.MaterialTextView
                     android:id="@+id/tv_version"
@@ -61,11 +62,12 @@
                     android:layout_toEndOf="@id/iv_icon"
                     android:textAppearance="?textAppearanceBodyMedium"
                     android:textColor="?colorOnPrimary"
-                    tools:text="1.2.3" />
+                    tools:text="v1.2.3" />
 
             </RelativeLayout>
         </com.google.android.material.card.MaterialCardView>
 
+        <!-- System Info Card -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/mcv_info"
             android:layout_width="match_parent"
@@ -82,6 +84,19 @@
                     style="@style/DeviceInfoDialogLabel"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:text="@string/info_status" />
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/status_detail"
+                    style="@style/DeviceInfoDialogValue"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+                <com.google.android.material.textview.MaterialTextView
+                    style="@style/DeviceInfoDialogLabel"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
                     android:text="@string/info_root_privilege" />
 
                 <com.google.android.material.textview.MaterialTextView
@@ -94,6 +109,7 @@
                     style="@style/DeviceInfoDialogLabel"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
                     android:text="@string/info_system_version" />
 
                 <com.google.android.material.textview.MaterialTextView
@@ -101,6 +117,65 @@
                     style="@style/DeviceInfoDialogValue"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content" />
+
+                <com.google.android.material.textview.MaterialTextView
+                    style="@style/DeviceInfoDialogLabel"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="@string/info_aa_version" />
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/aa_version"
+                    style="@style/DeviceInfoDialogValue"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+                <com.google.android.material.textview.MaterialTextView
+                    style="@style/DeviceInfoDialogLabel"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="@string/info_module_version" />
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/module_version"
+                    style="@style/DeviceInfoDialogValue"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Xposed Engine Status Card -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/mcv_engine"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="?dialogPreferredPadding">
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-medium"
+                    android:text="@string/info_engine"
+                    android:textAppearance="?textAppearanceTitleSmall" />
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/engine_detail"
+                    style="@style/DeviceInfoDialogValue"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp" />
+
             </LinearLayout>
 
         </com.google.android.material.card.MaterialCardView>
