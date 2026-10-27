@@ -148,6 +148,22 @@ app:title="Keyboard (IME) Display"
     </PreferenceCategory>
 
     <PreferenceCategory
+        app:key="CategoryDriverDistraction"
+        app:title="Driver Distraction"
+        app:summary="Control Android Auto's periodic touchscreen lockouts"
+        app:singleLineTitle="true"
+        app:iconSpaceReserved="false">
+
+        <rikka.material.preference.MaterialSwitchPreference
+            app:defaultValue="false"
+            app:key="DisableSpeedbump"
+            app:title="Disable Safety Pause"
+            app:summary="Prevent the periodic &quot;Safety pause. Back soon.&quot; touchscreen lockout"
+            app:iconSpaceReserved="false"/>
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
         app:key="CategoryHeadUnitHack"
         app:title="Head Unit Compatibility"
         app:summary="Bypass head unit restrictions for third-party apps"

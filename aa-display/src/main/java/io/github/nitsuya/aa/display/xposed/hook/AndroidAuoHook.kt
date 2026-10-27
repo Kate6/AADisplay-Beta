@@ -69,7 +69,7 @@ object AndroidAuoHook : BaseHook() {
 
     private val allAaHooks = listOf(
         AaBasicsHook, AaSignatureHook, AaDpiHook,
-        AaBtnEventHook, AaUiHook, AaPropsHook, AaHeadUnitHackHook,
+        AaBtnEventHook, AaUiHook, AaSpeedbumpHook, AaPropsHook, AaHeadUnitHackHook,
     )
 
     private fun activeHooks(processName: String, mirrorEnabled: Boolean): List<AaHook> {

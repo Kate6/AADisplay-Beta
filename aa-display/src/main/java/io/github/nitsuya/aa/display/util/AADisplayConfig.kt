@@ -43,6 +43,10 @@ object AADisplayConfig {
     // Coolwalk layout preference
     val PreferCoolwalkLayout = BooleanCfg("PreferCoolwalkLayout", false)
 
+    // Driver distraction
+    val DisableSpeedbump = BooleanCfg("DisableSpeedbump", false)
+
+
     // --- config backup version tracking ---
     val ConfigVersion = IntCfg("_config_version", 0)
 
@@ -57,5 +61,6 @@ object AADisplayConfig {
         EnableHeadUnitHack, HeadUnitMake, HeadUnitModel,
         ForceAllowUnknownSources, BypassValidation,
         PreferCoolwalkLayout,
+        DisableSpeedbump,
     )
 }
